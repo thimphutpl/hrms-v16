@@ -10,6 +10,7 @@
   "employee_settings_section",
   "emp_created_by",
   "standard_working_hours",
+  "return_day_dsa",
   "column_break_lrow",
   "retirement_age",
   "reminders_section",
@@ -374,13 +375,19 @@
    "fieldname": "employee_exit_settings_section",
    "fieldtype": "Section Break",
    "label": "Employee Exit Settings"
+  },
+  {
+   "fieldname": "return_day_dsa",
+   "fieldtype": "Select",
+   "label": "Return Day DSA (%)",
+   "options": "100\n70\n50\n20\n0"
   }
  ],
  "icon": "fa fa-cog",
  "idx": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-12-29 16:25:06.271352",
+ "modified": "2026-09-04 20:11:27.273956",
  "modified_by": "Administrator",
  "module": "HR",
  "name": "HR Settings",
