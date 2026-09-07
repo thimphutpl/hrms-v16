@@ -51,7 +51,6 @@ def execute(filters=None):
 			"absent_days": ss.absent_days,
 			"payment_days": ss.payment_days,
 			"currency": currency or company_currency,
-			"total_loan_repayment": ss.total_loan_repayment,
 		}
 
 		update_column_width(ss, columns)
@@ -66,19 +65,14 @@ def execute(filters=None):
 			row.update(
 				{
 					"gross_pay": flt(ss.gross_pay) * flt(ss.exchange_rate),
-					"total_deduction": (flt(ss.total_deduction) + flt(ss.total_loan_repayment))
-					* flt(ss.exchange_rate),
+					"total_deduction": flt(ss.total_deduction) * flt(ss.exchange_rate),
 					"net_pay": flt(ss.net_pay) * flt(ss.exchange_rate),
 				}
 			)
 
 		else:
 			row.update(
-				{
-					"gross_pay": ss.gross_pay,
-					"total_deduction": flt(ss.total_deduction) + flt(ss.total_loan_repayment),
-					"net_pay": ss.net_pay,
-				}
+				{"gross_pay": ss.gross_pay, "total_deduction": ss.total_deduction, "net_pay": ss.net_pay}
 			)
 
 		data.append(row)
@@ -89,9 +83,9 @@ def execute(filters=None):
 def get_earning_and_deduction_types(salary_slips):
 	salary_component_and_type = {_("Earning"): [], _("Deduction"): []}
 
-	for salary_component in get_salary_components(salary_slips):
-		component_type = get_salary_component_type(salary_component)
-		salary_component_and_type[_(component_type)].append(salary_component)
+	for salary_compoent in get_salary_components(salary_slips):
+		component_type = get_salary_component_type(salary_compoent)
+		salary_component_and_type[_(component_type)].append(salary_compoent)
 
 	return sorted(salary_component_and_type[_("Earning")]), sorted(salary_component_and_type[_("Deduction")])
 
@@ -133,7 +127,7 @@ def get_columns(earning_types, ded_types):
 			"label": _("Date of Joining"),
 			"fieldname": "data_of_joining",
 			"fieldtype": "Date",
-			"width": 80,
+			"width": 100,
 		},
 		{
 			"label": _("Branch"),
@@ -227,17 +221,6 @@ def get_columns(earning_types, ded_types):
 			}
 		)
 
-	if "lending" in frappe.get_installed_apps():
-		columns.append(
-			{
-				"label": _("Loan Repayment"),
-				"fieldname": "total_loan_repayment",
-				"fieldtype": "Currency",
-				"options": "currency",
-				"width": 120,
-			}
-		)
-
 	columns.extend(
 		[
 			{
@@ -287,11 +270,17 @@ def get_salary_slips(filters, company_currency):
 	if filters.get("docstatus"):
 		query = query.where(salary_slip.docstatus == doc_status[filters.get("docstatus")])
 
-	if filters.get("from_date"):
-		query = query.where(salary_slip.start_date >= filters.get("from_date"))
+	if filters.get("fiscal_year"):
+		query = query.where(salary_slip.fiscal_year == filters.get("fiscal_year"))
 
-	if filters.get("to_date"):
-		query = query.where(salary_slip.end_date <= filters.get("to_date"))
+	if filters.get("month"):
+		query = query.where(salary_slip.month == filters.get("month"))
+
+	# if filters.get("from_date"):
+	# 	query = query.where(salary_slip.start_date >= filters.get("from_date"))
+
+	# if filters.get("to_date"):
+	# 	query = query.where(salary_slip.end_date <= filters.get("to_date"))
 
 	if filters.get("company"):
 		query = query.where(salary_slip.company == filters.get("company"))
@@ -301,15 +290,6 @@ def get_salary_slips(filters, company_currency):
 
 	if filters.get("currency") and filters.get("currency") != company_currency:
 		query = query.where(salary_slip.currency == filters.get("currency"))
-
-	if filters.get("department"):
-		query = query.where(salary_slip.department == filters["department"])
-
-	if filters.get("designation"):
-		query = query.where(salary_slip.designation == filters["designation"])
-
-	if filters.get("branch"):
-		query = query.where(salary_slip.branch == filters["branch"])
 
 	salary_slips = query.run(as_dict=1)
 

@@ -1,8 +1,8 @@
 # Copyright (c) 2018, Frappe Technologies Pvt. Ltd. and Contributors
 # See license.txt
 
-from hrms.tests.utils import HRMSTestSuite
+from frappe.tests.utils import FrappeTestCase
 
 
-class TestPayrollPeriod(HRMSTestSuite):
+class TestPayrollPeriod(FrappeTestCase):
 	pass

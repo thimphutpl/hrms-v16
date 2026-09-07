@@ -2,13 +2,15 @@
 # See license.txt
 
 import frappe
+from frappe.tests.utils import FrappeTestCase, change_settings
 from frappe.utils import add_days, add_months, floor, flt, get_datetime, get_first_day, getdate
 
 from erpnext.setup.doctype.employee.test_employee import make_employee
+from erpnext.setup.doctype.holiday_list.test_holiday_list import set_holiday_list
 
 from hrms.hr.doctype.attendance.attendance import mark_attendance
 from hrms.hr.doctype.expense_claim.test_expense_claim import get_payable_account
-from hrms.hr.doctype.holiday_list_assignment.test_holiday_list_assignment import assign_holiday_list
+from hrms.payroll.doctype.gratuity.gratuity import get_last_salary_slip
 from hrms.payroll.doctype.salary_slip.test_salary_slip import (
 	make_deduction_salary_component,
 	make_earning_salary_component,
@@ -16,10 +18,11 @@ from hrms.payroll.doctype.salary_slip.test_salary_slip import (
 	make_holiday_list,
 )
 from hrms.payroll.doctype.salary_structure.salary_structure import make_salary_slip
-from hrms.tests.utils import HRMSTestSuite
+
+test_dependencies = ["Salary Component", "Salary Slip", "Account"]
 
 
-class TestGratuity(HRMSTestSuite):
+class TestGratuity(FrappeTestCase):
 	def setUp(self):
 		for dt in ["Gratuity", "Salary Slip", "Additional Salary"]:
 			frappe.db.delete(dt)
@@ -33,11 +36,13 @@ class TestGratuity(HRMSTestSuite):
 			relieving_date=self.relieving_date,
 		)
 
-		make_earning_salary_component(setup=True, test_tax=True, company_list=["_Test Company"])
+		make_earning_salary_component(
+			setup=True, test_tax=True, company_list=["_Test Company"], include_flexi_benefits=True
+		)
 		make_deduction_salary_component(setup=True, test_tax=True, company_list=["_Test Company"])
 		make_holiday_list()
 
-	@assign_holiday_list("Salary Slip Test Holiday List", "_Test Company")
+	@set_holiday_list("Salary Slip Test Holiday List", "_Test Company")
 	def test_gratuity_based_on_current_slab_via_additional_salary(self):
 		"""
 		Range	|	Fraction
@@ -82,47 +87,22 @@ class TestGratuity(HRMSTestSuite):
 		gratuity.reload()
 		self.assertEqual(gratuity.status, "Paid")
 
-	@assign_holiday_list("Salary Slip Test Holiday List", "_Test Company")
+	@set_holiday_list("Salary Slip Test Holiday List", "_Test Company")
 	def test_gratuity_based_on_all_previous_slabs_via_payment_entry(self):
 		"""
-		Range   |   Fraction
-		0-3     |   0.5
-		3-6     |   1.0
-		6-9		|	1.5
+		Range	|	Fraction
+		0-1		|	0
+		1-5		|	0.7
+		5-0		|	1
 		"""
 		from hrms.overrides.employee_payment_entry import get_payment_entry_for_employee
 
 		sal_slip = create_salary_slip(self.employee)
-
 		rule = setup_gratuity_rule("Rule Under Limited Contract (UAE)")
-		rule.gratuity_rule_slabs = []
-		for slab in [
-			{"from_year": 0, "to_year": 3, "fraction_of_applicable_earnings": 0.5},
-			{"from_year": 3, "to_year": 6, "fraction_of_applicable_earnings": 1.0},
-			{"from_year": 6, "to_year": 9, "fraction_of_applicable_earnings": 1.5},
-		]:
-			new_slab = frappe.get_doc(
-				{
-					"doctype": "Gratuity Rule Slab",
-					"from_year": slab["from_year"],
-					"to_year": slab["to_year"],
-					"fraction_of_applicable_earnings": slab["fraction_of_applicable_earnings"],
-					"parent": rule.name,
-					"parentfield": "gratuity_rule_slabs",
-					"parenttype": "Gratuity Rule",
-				}
-			)
-			rule.append("gratuity_rule_slabs", new_slab)
-		rule.save()
-		rule.reload()
-
 		set_mode_of_payment_account()
 
 		gratuity = create_gratuity(
-			expense_account="Payment Account - _TC",
-			mode_of_payment="Cash",
-			employee=self.employee,
-			rule=rule.name,
+			expense_account="Payment Account - _TC", mode_of_payment="Cash", employee=self.employee
 		)
 
 		# work experience calculation
@@ -145,7 +125,7 @@ class TestGratuity(HRMSTestSuite):
 			limit=1,
 		)
 
-		gratuity_amount = ((3 * 0.5) + (3 * 1.0)) * component_amount[0].amount
+		gratuity_amount = ((0 * 1) + (4 * 0.7) + (1 * 1)) * component_amount[0].amount
 		self.assertEqual(flt(gratuity_amount, 2), flt(gratuity.amount, 2))
 		self.assertEqual(gratuity.status, "Unpaid")
 
@@ -163,7 +143,7 @@ class TestGratuity(HRMSTestSuite):
 		self.assertEqual(gratuity.status, "Unpaid")
 		self.assertEqual(gratuity.paid_amount, 0)
 
-	@HRMSTestSuite.change_settings(
+	@change_settings(
 		"Payroll Settings",
 		{
 			"payroll_based_on": "Attendance",
@@ -191,70 +171,6 @@ class TestGratuity(HRMSTestSuite):
 		)
 		self.assertEqual(gratuity.amount, 190000.0)
 
-	@assign_holiday_list("Salary Slip Test Holiday List", "_Test Company")
-	def test_settle_gratuity_via_fnf_statement(self):
-		from hrms.hr.doctype.full_and_final_statement.test_full_and_final_statement import (
-			create_full_and_final_statement,
-		)
-
-		create_salary_slip(self.employee)
-		setup_gratuity_rule("Rule Under Limited Contract (UAE)")
-		set_mode_of_payment_account()
-
-		# create gratuity
-		gratuity = create_gratuity(
-			expense_account="Payment Account - _TC", mode_of_payment="Cash", employee=self.employee
-		)
-		gratuity.reload()
-
-		# create Full and Final Statement and add gratuity as Payables
-		fnf = create_full_and_final_statement(self.employee)
-		fnf.payables = []
-		fnf.receivables = []
-		fnf.append(
-			"payables",
-			{
-				"component": "Gratuity",
-				"reference_document_type": "Gratuity",
-				"reference_document": gratuity.name,
-				"amount": gratuity.amount,
-				"account": gratuity.payable_account,
-				"status": "Settled",
-			},
-		)
-		fnf.submit()
-
-		jv = fnf.create_journal_entry()
-		jv.accounts[1].account = (
-			frappe.get_cached_value("Company", "_Test Company", "default_bank_account") or "_Test Bank - _TC"
-		)
-		jv.cheque_no = "123456"
-		jv.cheque_date = getdate()
-		jv.save()
-		jv.submit()
-
-		gratuity.reload()
-		self.assertEqual(gratuity.status, "Paid")
-
-		jv.cancel()
-		gratuity.reload()
-		self.assertEqual(gratuity.status, "Unpaid")
-
-	def test_status_on_discard(self):
-		create_salary_slip(self.employee)
-		setup_gratuity_rule("Rule Under Limited Contract (UAE)")
-		set_mode_of_payment_account()
-		# create gratuity
-		gratuity = create_gratuity(
-			do_not_submit=True,
-			expense_account="Payment Account - _TC",
-			mode_of_payment="Cash",
-			employee=self.employee,
-		)
-		gratuity.discard()
-		gratuity.reload()
-		self.assertEqual(gratuity.status, "Cancelled")
-
 
 def setup_gratuity_rule(name: str) -> dict:
 	from hrms.regional.united_arab_emirates.setup import setup
@@ -270,7 +186,7 @@ def setup_gratuity_rule(name: str) -> dict:
 	return rule
 
 
-def create_gratuity(do_not_submit=False, **args):
+def create_gratuity(**args):
 	if args:
 		args = frappe._dict(args)
 	gratuity = frappe.new_doc("Gratuity")
@@ -285,11 +201,8 @@ def create_gratuity(do_not_submit=False, **args):
 		gratuity.expense_account = args.expense_account or "Payment Account - _TC"
 		gratuity.payable_account = args.payable_account or get_payable_account("_Test Company")
 		gratuity.mode_of_payment = args.mode_of_payment or "Cash"
-		gratuity.cost_center = args.cost_center or "Main - _TC"
 
 	gratuity.save()
-	if do_not_submit:
-		return gratuity
 	gratuity.submit()
 
 	return gratuity

@@ -26,7 +26,8 @@
   "employee_benefits",
   "totals",
   "total_amount",
-  "column_break"
+  "column_break",
+  "pro_rata_dispensed_amount"
  ],
  "fields": [
   {
@@ -102,7 +103,7 @@
   {
    "fieldname": "employee_benefits",
    "fieldtype": "Table",
-   "label": "Flexible Benefits",
+   "label": "Employee Benefits",
    "options": "Employee Benefit Application Detail",
    "reqd": 1
   },
@@ -115,6 +116,13 @@
    "fieldname": "total_amount",
    "fieldtype": "Currency",
    "label": "Total Amount",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pro_rata_dispensed_amount",
+   "fieldtype": "Currency",
+   "label": "Dispensed Amount (Pro-rated)",
    "options": "currency",
    "read_only": 1
   },
@@ -154,7 +162,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-17 20:01:52.362546",
+ "modified": "2022-11-08 16:15:35.392164",
  "modified_by": "Administrator",
  "module": "Payroll",
  "name": "Employee Benefit Application",
@@ -220,9 +228,8 @@
   }
  ],
  "quick_entry": 1,
- "row_format": "Dynamic",
  "search_fields": "employee_name",
- "sort_field": "creation",
+ "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
  "title_field": "employee_name",

@@ -11,11 +11,11 @@
  "link_to": "Shift & Attendance",
  "link_type": "Workspace Sidebar",
  "logo_url": "/assets/hrms/icons/desktop_icons/shift-attendence.svg",
- "modified": "2026-01-01 20:07:01.284302",
+ "modified": "2026-09-05 19:50:15.242891",
  "modified_by": "Administrator",
  "name": "Shift & Attendance",
  "owner": "Administrator",
- "parent_icon": "Frappe HR",
+ "parent_icon": "Integra HR",
  "restrict_removal": 0,
  "roles": [],
  "standard": 1

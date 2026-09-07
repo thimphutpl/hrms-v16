@@ -2,8 +2,8 @@
 # See license.txt
 
 # import frappe
-from hrms.tests.utils import HRMSTestSuite
+from frappe.tests.utils import FrappeTestCase
 
 
-class TestPayrollSettings(HRMSTestSuite):
+class TestPayrollSettings(FrappeTestCase):
 	pass

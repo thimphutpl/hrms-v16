@@ -4,7 +4,29 @@
 frappe.ui.form.on("Employee Benefit Application", {
 	employee: function (frm) {
 		if (frm.doc.employee) {
-			frappe.run_serially([() => frm.trigger("set_earning_component")]);
+			frappe.run_serially([
+				() => frm.trigger("get_employee_currency"),
+				() => frm.trigger("set_earning_component"),
+			]);
+		}
+		var method, args;
+		if (frm.doc.employee && frm.doc.date && frm.doc.payroll_period) {
+			method =
+				"hrms.payroll.doctype.employee_benefit_application.employee_benefit_application.get_max_benefits_remaining";
+			args = {
+				employee: frm.doc.employee,
+				on_date: frm.doc.date,
+				payroll_period: frm.doc.payroll_period,
+			};
+			get_max_benefits(frm, method, args);
+		} else if (frm.doc.employee && frm.doc.date) {
+			method =
+				"hrms.payroll.doctype.employee_benefit_application.employee_benefit_application.get_max_benefits";
+			args = {
+				employee: frm.doc.employee,
+				on_date: frm.doc.date,
+			};
+			get_max_benefits(frm, method, args);
 		}
 	},
 
@@ -13,14 +35,66 @@ frappe.ui.form.on("Employee Benefit Application", {
 	},
 
 	set_earning_component: function (frm) {
-		if (!frm.doc.date || !frm.doc.employee) {
-			frm.doc.employee_benefits = [];
-		} else {
-			frm.call("set_benefit_components_and_currency");
+		if (!frm.doc.employee && !frm.doc.date) return;
+		frm.set_query("earning_component", "employee_benefits", function () {
+			return {
+				query: "hrms.payroll.doctype.employee_benefit_application.employee_benefit_application.get_earning_components",
+				filters: { date: frm.doc.date, employee: frm.doc.employee },
+			};
+		});
+	},
+
+	get_employee_currency: function (frm) {
+		if (frm.doc.employee) {
+			frappe.call({
+				method: "hrms.payroll.doctype.salary_structure.salary_structure.get_employee_currency",
+				args: {
+					employee: frm.doc.employee,
+				},
+				callback: function (r) {
+					if (r.message) {
+						frm.set_value("currency", r.message);
+						frm.refresh_fields();
+					}
+				},
+			});
 		}
-		frm.refresh_fields();
+	},
+
+	payroll_period: function (frm) {
+		var method, args;
+		if (frm.doc.employee && frm.doc.date && frm.doc.payroll_period) {
+			method =
+				"hrms.payroll.doctype.employee_benefit_application.employee_benefit_application.get_max_benefits_remaining";
+			args = {
+				employee: frm.doc.employee,
+				on_date: frm.doc.date,
+				payroll_period: frm.doc.payroll_period,
+			};
+			get_max_benefits(frm, method, args);
+		}
+	},
+	max_benefits: function (frm) {
+		calculate_all(frm.doc);
 	},
 });
+
+var get_max_benefits = function (frm, method, args) {
+	frappe.call({
+		method: method,
+		args: args,
+		callback: function (data) {
+			if (!data.exc) {
+				if (data.message) {
+					frm.set_value("max_benefits", data.message);
+				} else {
+					frm.set_value("max_benefits", 0);
+				}
+			}
+			frm.refresh_fields();
+		},
+	});
+};
 
 frappe.ui.form.on("Employee Benefit Application Detail", {
 	amount: function (frm) {
@@ -33,6 +107,7 @@ frappe.ui.form.on("Employee Benefit Application Detail", {
 
 var calculate_all = function (doc) {
 	var tbl = doc.employee_benefits || [];
+	var pro_rata_dispensed_amount = 0;
 	var total_amount = 0;
 	if (doc.max_benefits === 0) {
 		doc.employee_benefits = [];
@@ -41,10 +116,14 @@ var calculate_all = function (doc) {
 			if (cint(tbl[i].amount) > 0) {
 				total_amount += flt(tbl[i].amount);
 			}
+			if (tbl[i].pay_against_benefit_claim != 1) {
+				pro_rata_dispensed_amount += flt(tbl[i].amount);
+			}
 		}
 	}
 
 	doc.total_amount = total_amount;
 	doc.remaining_benefit = doc.max_benefits - total_amount;
-	refresh_many(["total_amount", "remaining_benefit"]);
+	doc.pro_rata_dispensed_amount = pro_rata_dispensed_amount;
+	refresh_many(["pro_rata_dispensed_amount", "total_amount", "remaining_benefit"]);
 };

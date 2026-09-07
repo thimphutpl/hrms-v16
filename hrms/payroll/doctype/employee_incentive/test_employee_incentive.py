@@ -1,8 +1,8 @@
 # Copyright (c) 2018, Frappe Technologies Pvt. Ltd. and Contributors
 # See license.txt
 
-from hrms.tests.utils import HRMSTestSuite
+from frappe.tests.utils import FrappeTestCase
 
 
-class TestEmployeeIncentive(HRMSTestSuite):
+class TestEmployeeIncentive(FrappeTestCase):
 	pass

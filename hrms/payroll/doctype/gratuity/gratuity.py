@@ -3,7 +3,7 @@
 
 import frappe
 from frappe import _, bold
-from frappe.query_builder.functions import Abs, Sum
+from frappe.query_builder.functions import Sum
 from frappe.utils import cstr, flt, get_datetime, get_link_to_form
 
 from erpnext.accounts.general_ledger import make_gl_entries
@@ -56,7 +56,7 @@ class Gratuity(AccountsController):
 			self.create_gl_entries()
 
 	def on_cancel(self):
-		self.ignore_linked_doctypes = ["GL Entry", "Payment Ledger Entry", "Advance Payment Ledger Entry"]
+		self.ignore_linked_doctypes = ["GL Entry"]
 		self.create_gl_entries(cancel=True)
 		self.set_status(update=True)
 
@@ -117,15 +117,17 @@ class Gratuity(AccountsController):
 			additional_salary.submit()
 
 	def set_total_advance_paid(self):
-		aple = frappe.qb.DocType("Advance Payment Ledger Entry")
+		gle = frappe.qb.DocType("GL Entry")
 		paid_amount = (
-			frappe.qb.from_(aple)
-			.select(Abs(Sum(aple.amount)).as_("paid_amount"))
+			frappe.qb.from_(gle)
+			.select(Sum(gle.debit_in_account_currency).as_("paid_amount"))
 			.where(
-				(aple.company == self.company)
-				& (aple.against_voucher_type == self.doctype)
-				& (aple.against_voucher_no == self.name)
-				& (aple.delinked == 0)
+				(gle.against_voucher_type == "Gratuity")
+				& (gle.against_voucher == self.name)
+				& (gle.party_type == "Employee")
+				& (gle.party == self.employee)
+				& (gle.docstatus == 1)
+				& (gle.is_cancelled == 0)
 			)
 		).run(as_dict=True)[0].paid_amount or 0
 
@@ -199,7 +201,7 @@ class Gratuity(AccountsController):
 			lwp_leave_types = frappe.get_all("Leave Type", filters={"is_lwp": 1}, pluck="name")
 			filters["leave_type"] = ("IN", lwp_leave_types)
 
-		record = frappe.get_all("Attendance", filters=filters, fields=[{"COUNT": "*", "as": "total_lwp"}])
+		record = frappe.get_all("Attendance", filters=filters, fields=["COUNT(*) as total_lwp"])
 		return record[0].total_lwp if len(record) else 0
 
 	def get_gratuity_amount(self, experience: float) -> float:
@@ -264,11 +266,16 @@ class Gratuity(AccountsController):
 		if not salary_slip:
 			frappe.throw(_("No Salary Slip found for Employee: {0}").format(bold(self.employee)))
 
+		# consider full payment days for calculation as last month's salary slip
+		# might have less payment days as per attendance, making it non-deterministic
+		salary_slip.payment_days = salary_slip.total_working_days
+		salary_slip.calculate_net_pay()
+
 		total_amount = 0
 		component_found = False
 		for row in salary_slip.earnings:
 			if row.salary_component in applicable_earning_components:
-				total_amount += flt(row.default_amount)
+				total_amount += flt(row.amount)
 				component_found = True
 
 		if not component_found:
@@ -306,9 +313,6 @@ class Gratuity(AccountsController):
 
 	def _is_experience_beyond_slab(self, slab: dict, experience: float) -> bool:
 		return bool(slab.from_year < experience and (slab.to_year < experience and slab.to_year != 0))
-
-	def on_discard(self):
-		self.db_set("status", "Cancelled")
 
 
 def get_last_salary_slip(employee: str) -> dict | None:

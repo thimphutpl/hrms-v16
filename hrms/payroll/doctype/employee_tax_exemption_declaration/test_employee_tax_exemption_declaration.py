@@ -2,20 +2,20 @@
 # See license.txt
 
 import frappe
+from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_months, getdate
 
 import erpnext
 from erpnext.setup.doctype.employee.test_employee import make_employee
 
 from hrms.hr.utils import DuplicateDeclarationError
-from hrms.tests.utils import HRMSTestSuite
 
 PAYROLL_PERIOD_NAME = "_Test Exemption Period"
 PAYROLL_PERIOD_START = "2022-01-01"
 PAYROLL_PERIOD_END = "2022-12-31"
 
 
-class TestEmployeeTaxExemptionDeclaration(HRMSTestSuite):
+class TestEmployeeTaxExemptionDeclaration(FrappeTestCase):
 	def setUp(self):
 		frappe.db.delete("Employee Tax Exemption Declaration")
 		frappe.db.delete("Salary Structure Assignment")
@@ -37,9 +37,9 @@ class TestEmployeeTaxExemptionDeclaration(HRMSTestSuite):
 			{
 				"doctype": "Employee Tax Exemption Declaration",
 				"employee": frappe.get_value("Employee", {"user_id": "employee@taxexemption.com"}, "name"),
-				"company": "_Test Company",
+				"company": erpnext.get_default_company(),
 				"payroll_period": PAYROLL_PERIOD_NAME,
-				"currency": "INR",
+				"currency": erpnext.get_default_currency(),
 				"declarations": [
 					dict(
 						exemption_sub_category="_Test Sub Category",
@@ -61,9 +61,9 @@ class TestEmployeeTaxExemptionDeclaration(HRMSTestSuite):
 			{
 				"doctype": "Employee Tax Exemption Declaration",
 				"employee": frappe.get_value("Employee", {"user_id": "employee@taxexemption.com"}, "name"),
-				"company": "_Test Company",
+				"company": erpnext.get_default_company(),
 				"payroll_period": PAYROLL_PERIOD_NAME,
-				"currency": "INR",
+				"currency": erpnext.get_default_currency(),
 				"declarations": [
 					dict(
 						exemption_sub_category="_Test Sub Category",
@@ -83,9 +83,9 @@ class TestEmployeeTaxExemptionDeclaration(HRMSTestSuite):
 			{
 				"doctype": "Employee Tax Exemption Declaration",
 				"employee": frappe.get_value("Employee", {"user_id": "employee@taxexemption.com"}, "name"),
-				"company": "_Test Company",
+				"company": erpnext.get_default_company(),
 				"payroll_period": PAYROLL_PERIOD_NAME,
-				"currency": "INR",
+				"currency": erpnext.get_default_currency(),
 				"declarations": [
 					dict(
 						exemption_sub_category="_Test Sub Category",
@@ -106,9 +106,9 @@ class TestEmployeeTaxExemptionDeclaration(HRMSTestSuite):
 			{
 				"doctype": "Employee Tax Exemption Declaration",
 				"employee": frappe.get_value("Employee", {"user_id": "employee@taxexemption.com"}, "name"),
-				"company": "_Test Company",
+				"company": erpnext.get_default_company(),
 				"payroll_period": PAYROLL_PERIOD_NAME,
-				"currency": "INR",
+				"currency": erpnext.get_default_currency(),
 				"declarations": [
 					dict(
 						exemption_sub_category="_Test Sub Category",
@@ -349,7 +349,6 @@ class TestEmployeeTaxExemptionDeclaration(HRMSTestSuite):
 		)
 
 		# salary structure with base 50000, HRA 3000
-		# effective from 3 months before payroll period
 		make_salary_structure(
 			"Monthly Structure for HRA Exemption 1",
 			"Monthly",
@@ -357,7 +356,7 @@ class TestEmployeeTaxExemptionDeclaration(HRMSTestSuite):
 			company="_Test Company",
 			currency="INR",
 			payroll_period=payroll_period.name,
-			from_date=add_months(payroll_period.start_date, -3),
+			from_date=payroll_period.start_date,
 		)
 
 		# salary structure with base 70000, HRA = base * 0.2 = 14000
@@ -380,7 +379,6 @@ class TestEmployeeTaxExemptionDeclaration(HRMSTestSuite):
 
 		salary_structure.submit()
 
-		# effective from 6 months after payroll period
 		create_salary_structure_assignment(
 			employee,
 			salary_structure.name,
@@ -429,11 +427,13 @@ def create_payroll_period(**args):
 		from datetime import date
 
 		payroll_period = frappe.get_doc(
-			doctype="Payroll Period",
-			name=name,
-			company=args.company or "_Test Company",
-			start_date=args.start_date or date(date.today().year, 1, 1),
-			end_date=args.end_date or date(date.today().year, 12, 31),
+			dict(
+				doctype="Payroll Period",
+				name=name,
+				company=args.company or erpnext.get_default_company(),
+				start_date=args.start_date or date(date.today().year, 1, 1),
+				end_date=args.end_date or date(date.today().year, 12, 31),
+			)
 		).insert()
 		return payroll_period
 	else:
