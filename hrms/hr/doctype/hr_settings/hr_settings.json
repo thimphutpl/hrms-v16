@@ -709,6 +709,7 @@
    "default": "0",
    "fieldname": "is_basic_salary_for_ltc",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Is Basic salary for LTC"
   },
   {
@@ -716,6 +717,7 @@
    "depends_on": "eval:!doc.is_basic_salary_for_ltc",
    "fieldname": "ltc_fixed_amount",
    "fieldtype": "Currency",
+   "hidden": 1,
    "label": "LTC Fixed Amount",
    "mandatory_depends_on": "eval:!doc.is_basic_salary_for_ltc"
   },
@@ -723,6 +725,7 @@
    "default": "0",
    "fieldname": "prorate_ltc",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Prorate LTC"
   }
  ],
@@ -730,7 +733,7 @@
  "idx": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-09-06 15:26:45.983270",
+ "modified": "2026-09-08 15:04:05.371779",
  "modified_by": "Administrator",
  "module": "HR",
  "name": "HR Settings",
