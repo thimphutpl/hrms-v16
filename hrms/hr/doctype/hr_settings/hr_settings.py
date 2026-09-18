@@ -60,6 +60,7 @@ class HRSettings(Document):
 		leave_approver_mandatory_in_leave_application: DF.Check
 		leave_status_notification_template: DF.Link | None
 		ltc_fixed_amount: DF.Currency
+		minimum_month_required_for_ltc: DF.Data | None
 		overtime_approval_notification_template: DF.Link | None
 		overtime_limit: DF.Int
 		overtime_limit_type: DF.Literal["Per Day", "Per Week", "Per Month"]

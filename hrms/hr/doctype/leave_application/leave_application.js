@@ -3,7 +3,7 @@
 
 frappe.ui.form.on("Leave Application", {
 	setup: function (frm) {
-		frm.set_query("leave_approver", function () {
+		frm.set_query("reports_to", function () {
 			return {
 				query: "hrms.hr.doctype.department_approver.department_approver.get_approvers",
 				filters: {
@@ -30,7 +30,7 @@ frappe.ui.form.on("Leave Application", {
 				},
 				callback: function (r) {
 					if (!r.exc && r.message) {
-						frm.toggle_reqd("leave_approver", true);
+						frm.toggle_reqd("reports_to", true);
 					}
 				},
 			});
@@ -118,7 +118,11 @@ frappe.ui.form.on("Leave Application", {
 	async set_employee(frm) {
 		if (frm.doc.employee) return;
 
+		
 		const employee = await hrms.get_current_employee(frm);
+		//const employee = await "BTF201412002"
+		
+		console.log(employee)
 		if (employee) {
 			frm.set_value("employee", employee);
 		}
@@ -127,14 +131,15 @@ frappe.ui.form.on("Leave Application", {
 	employee: function (frm) {
 		frm.trigger("make_dashboard");
 		frm.trigger("get_leave_balance");
-		frm.trigger("set_leave_approver");
+		frm.trigger("set_reports_to");
+		frm.trigger("set_leave_approver")
 	},
 
-	leave_approver: function (frm) {
-		if (frm.doc.leave_approver) {
-			frm.set_value("leave_approver_name", frappe.user.full_name(frm.doc.leave_approver));
-		}
-	},
+	// leave_approver: function (frm) {
+	// 	if (frm.doc.leave_approver) {
+	// 		frm.set_value("leave_approver_name", frappe.user.full_name(frm.doc.leave_approver));
+	// 	}
+	// },
 
 	leave_type: function (frm) {
 		frm.trigger("get_leave_balance");
@@ -154,14 +159,14 @@ frappe.ui.form.on("Leave Application", {
 	},
 
 	from_date: function (frm) {
-		frm.events.validate_from_to_date(frm, "from_date");
+		frm.events.validate_from_to_date(frm, "to_date");
 		frm.trigger("make_dashboard");
 		frm.trigger("half_day_datepicker");
 		frm.trigger("calculate_total_days");
 	},
 
 	to_date: function (frm) {
-		frm.events.validate_from_to_date(frm, "to_date");
+		frm.events.validate_from_to_date(frm, "from_date");
 		frm.trigger("make_dashboard");
 		frm.trigger("half_day_datepicker");
 		frm.trigger("calculate_total_days");
@@ -171,24 +176,10 @@ frappe.ui.form.on("Leave Application", {
 		frm.trigger("calculate_total_days");
 	},
 
-	validate_from_to_date: function (frm, updated_field) {
-		if (!frm.doc.from_date || !frm.doc.to_date) return;
-
+	validate_from_to_date: function (frm, null_date) {
 		const from_date = Date.parse(frm.doc.from_date);
 		const to_date = Date.parse(frm.doc.to_date);
-
-		if (to_date < from_date) {
-			const other_field = updated_field === "from_date" ? "to_date" : "from_date";
-
-			frm.set_value(other_field, frm.doc[updated_field]);
-			frappe.show_alert({
-				message: __("Changing '{0}' to {1}.", [
-					__(frm.fields_dict[other_field].df.label),
-					frappe.datetime.str_to_user(frm.doc[updated_field]),
-				]),
-				indicator: "blue",
-			});
-		}
+		if (to_date < from_date) frm.set_value(null_date, "");
 	},
 
 	half_day_datepicker: function (frm) {
@@ -253,21 +244,23 @@ frappe.ui.form.on("Leave Application", {
 		}
 	},
 
-	set_leave_approver: function (frm) {
+	set_reports_to: function (frm) {
 		if (frm.doc.employee) {
+			console.log("hi")
 			return frappe.call({
-				method: "hrms.hr.doctype.leave_application.leave_application.get_leave_approver",
+				method: "integrasuite.custom_function.hr_custom_function.get_reports_to",
 				args: {
 					employee: frm.doc.employee,
 				},
 				callback: function (r) {
 					if (r && r.message) {
-						frm.set_value("leave_approver", r.message);
+						frm.set_value("reports_to", r.message);
 					}
 				},
 			});
 		}
 	},
+	
 
 	set_form_buttons: async function (frm) {
 		let self_approval_not_allowed = frm.doc.__onload
@@ -286,14 +279,10 @@ frappe.ui.form.on("Leave Application", {
 		}
 	},
 	show_save_button: function (frm) {
-		frm.page.set_primary_action(__("Save"), () => {
+		frm.page.set_primary_action("Save", () => {
 			frm.save();
 		});
 		$(".form-message").prop("hidden", true);
-	},
-	posting_date: function (frm) {
-		frm.trigger("make_dashboard");
-		frm.trigger("get_leave_balance");
 	},
 });
 

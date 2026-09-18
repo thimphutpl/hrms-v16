@@ -28,6 +28,8 @@
   "leave_approver",
   "leave_approver_name",
   "follow_via_email",
+  "reports_to",
+  "reports_name",
   "column_break_18",
   "posting_date",
   "status",
@@ -36,7 +38,8 @@
   "color",
   "column_break_17",
   "letter_head",
-  "amended_from"
+  "amended_from",
+  "workflow_state"
  ],
  "fields": [
   {
@@ -52,6 +55,7 @@
   {
    "fieldname": "employee",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "in_global_search": 1,
    "in_standard_filter": 1,
    "label": "Employee",
@@ -156,14 +160,17 @@
   {
    "fieldname": "leave_approver",
    "fieldtype": "Link",
+   "hidden": 1,
+   "ignore_user_permissions": 1,
    "label": "Leave Approver",
    "options": "User"
   },
   {
+   "fetch_from": "leave_approver.full_name",
    "fieldname": "leave_approver_name",
    "fieldtype": "Data",
-   "label": "Leave Approver Name",
-   "read_only": 1
+   "hidden": 1,
+   "label": "Leave Approver Name"
   },
   {
    "fieldname": "column_break_18",
@@ -173,6 +180,7 @@
    "default": "Open",
    "fieldname": "status",
    "fieldtype": "Select",
+   "hidden": 1,
    "in_standard_filter": 1,
    "label": "Status",
    "no_copy": 1,
@@ -248,6 +256,27 @@
    "fieldname": "sb_other_details",
    "fieldtype": "Section Break",
    "label": "Other Details"
+  },
+  {
+   "fieldname": "reports_to",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "label": "Reports to",
+   "options": "User"
+  },
+  {
+   "fetch_from": "reports_to.full_name",
+   "fieldname": "reports_name",
+   "fieldtype": "Data",
+   "label": "Reports Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "workflow_state",
+   "fieldtype": "Link",
+   "label": "Workflow State",
+   "options": "Workflow State",
+   "read_only": 1
   }
  ],
  "icon": "fa fa-calendar",
@@ -255,7 +284,7 @@
  "is_submittable": 1,
  "links": [],
  "max_attachments": 3,
- "modified": "2026-01-27 12:02:51.679025",
+ "modified": "2026-09-14 16:39:08.565543",
  "modified_by": "Administrator",
  "module": "HR",
  "name": "Leave Application",
@@ -307,6 +336,7 @@
    "write": 1
   },
   {
+   "amend": 1,
    "cancel": 1,
    "delete": 1,
    "email": 1,
@@ -346,7 +376,7 @@
  ],
  "row_format": "Dynamic",
  "search_fields": "employee,employee_name,leave_type,from_date,to_date,total_leave_days",
- "sort_field": "creation",
+ "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
  "timeline_field": "employee",

@@ -26,6 +26,7 @@ class EmployeeCheckin(Document):
 		self.time = get_datetime(self.time).replace(microsecond=0)
 
 	def validate(self):
+		self.validate_employee_user()
 		validate_active_employee(self.employee)
 		self.validate_duplicate_log()
 		self.validate_time_change()
@@ -56,6 +57,38 @@ class EmployeeCheckin(Document):
 				msg=_(
 					"An attendance record is linked to this checkin. Please cancel the attendance before modifying time."
 				),
+			)
+	def validate_employee_user(self):
+		user = frappe.session.user
+
+		# Full access users
+		if user == "Administrator":
+			return
+
+		roles = set(frappe.get_roles(user))
+
+		if roles.intersection({"HR Manager", "HR User", "System Manager"}):
+			return
+
+		employee = frappe.db.get_value(
+			"Employee",
+			{
+				"user_id": user,
+				"status": "Active"
+			},
+			"name"
+		)
+
+		if not employee:
+			frappe.throw(
+				_("No active Employee is linked with your User ID."),
+				frappe.PermissionError
+			)
+
+		if self.employee != employee:
+			frappe.throw(
+				_("You can create Employee Checkin only for yourself."),
+				frappe.PermissionError
 			)
 
 	@frappe.whitelist()

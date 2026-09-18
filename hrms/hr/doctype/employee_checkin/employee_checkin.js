@@ -13,10 +13,17 @@ frappe.ui.form.on("Employee Checkin", {
 		}
 		if (!frm.doc.__islocal) frm.trigger("add_fetch_shift_button");
 
-		const allow_geolocation_tracking = await frappe.db.get_single_value(
-			"HR Settings",
-			"allow_geolocation_tracking",
-		);
+		const allow_geolocation_tracking = false;
+
+		if (!allow_geolocation_tracking) {
+			hide_field([
+				"fetch_geolocation",
+				"latitude",
+				"longitude",
+				"geolocation",
+			]);
+			return;
+		}
 
 		if (!allow_geolocation_tracking) {
 			hide_field(["fetch_geolocation", "latitude", "longitude", "geolocation"]);

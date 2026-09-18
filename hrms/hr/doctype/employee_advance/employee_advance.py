@@ -189,6 +189,7 @@ class EmployeeAdvance(Document):
         "max_amount_intrs_fre_ln": max_amount_intrs_fre_ln
 		}
 	def update_salary_structure(self, cancel=False):
+		
 		if cancel:
 			rem_list = []
 			if self.salary_structure:
@@ -325,13 +326,16 @@ class EmployeeAdvance(Document):
 				and total_amount == flt(self.paid_amount, precision)
 			):
 				status = "Partly Claimed and Returned"
-			elif flt(self.paid_amount) > 0 and flt(self.advance_amount, precision) == flt(
-				self.paid_amount, precision
+			elif flt(self.paid_amount) > 0 and flt(self.advance_amount) == flt(
+				self.paid_amount
 			):
+				#frappe.throw("hi")
 				status = "Paid"
 				self.update_salary_structure()
 			else:
-				status = "Unpaid"
+				#frappe.throw("jjjj")
+				#self.update_salary_structure()
+				status = "unpaid"
 		elif self.docstatus == 2:
 			status = "Cancelled"
 

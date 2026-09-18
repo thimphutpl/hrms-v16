@@ -154,7 +154,7 @@ override_doctype_class = {
 	"Payment Entry": "hrms.overrides.employee_payment_entry.EmployeePaymentEntry",
 	"Project": "hrms.overrides.employee_project.EmployeeProject",
 }
-
+advance_payment_doctypes = ["Employee Advance"]
 # Document Events
 # ---------------
 # Hook on document methods and events
