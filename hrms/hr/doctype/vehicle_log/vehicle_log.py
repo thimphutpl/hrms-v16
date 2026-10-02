@@ -9,6 +9,34 @@ from frappe.utils import flt
 
 
 class VehicleLog(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+		from hrms.hr.doctype.vehicle_service.vehicle_service import VehicleService
+
+		amended_from: DF.Link | None
+		date: DF.Date
+		employee: DF.Link
+		fuel_qty: DF.Float
+		invoice: DF.Data | None
+		last_odometer: DF.Int
+		license_plate: DF.Link
+		make: DF.ReadOnly | None
+		model: DF.ReadOnly | None
+		naming_series: DF.Literal["HR-VLOG-.YYYY.-"]
+		odometer: DF.Int
+		parent: DF.Data
+		parentfield: DF.Data
+		parenttype: DF.Data
+		price: DF.Currency
+		service_detail: DF.Table[VehicleService]
+		supplier: DF.Link | None
+	# end: auto-generated types
+
 	def validate(self):
 		if flt(self.odometer) < flt(self.last_odometer):
 			frappe.throw(
