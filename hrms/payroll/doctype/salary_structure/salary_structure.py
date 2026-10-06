@@ -64,6 +64,7 @@ class SalaryStructure(Document):
 	def validate_amount(self):
 		#if flt(self.net_pay) < 0 and self.salary_slip_based_on_timesheet:
 		if flt(self.net_pay) < 0:
+			pass
 			frappe.throw(_("Net pay cannot be negative"))
 
 	def validate_salary_component(self):
