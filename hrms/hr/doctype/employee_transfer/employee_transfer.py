@@ -11,6 +11,57 @@ from frappe.utils import getdate
 
 
 class EmployeeTransfer(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+		from hrms.hr.doctype.employee_property_history.employee_property_history import EmployeePropertyHistory
+
+		amended_from: DF.Link | None
+		company: DF.Link | None
+		create_new_employee_id: DF.Check
+		current_approver_name: DF.Data | None
+		current_supervisor_name: DF.Data | None
+		date_of_joining: DF.Date | None
+		description: DF.SmallText | None
+		emp_name: DF.Data | None
+		employee: DF.Link
+		employee_benefits_status: DF.Literal["Not Claimed", "Claimed"]
+		grade: DF.Link | None
+		new_approver: DF.Link | None
+		new_approver_name: DF.Data | None
+		new_branch: DF.Link
+		new_company: DF.Link | None
+		new_cost_center: DF.Link | None
+		new_department: DF.Link | None
+		new_designation: DF.Link | None
+		new_division: DF.Link | None
+		new_employee_id: DF.Link | None
+		new_reports_to: DF.Link | None
+		new_section: DF.Link | None
+		new_supervisor_name: DF.Data | None
+		old_branch: DF.Link
+		old_cost_center: DF.Link | None
+		old_department: DF.Link | None
+		old_designation: DF.Link | None
+		old_division: DF.Link | None
+		old_reports_to: DF.Link | None
+		old_section: DF.Link | None
+		reallocate_leaves: DF.Check
+		rejection_reason: DF.SmallText | None
+		supervisor: DF.Link | None
+		supervisor_designation: DF.Data | None
+		supervisor_name: DF.Data | None
+		transfer_date: DF.Date
+		transfer_details: DF.Table[EmployeePropertyHistory]
+		transfer_type: DF.Literal["", "Regular Transfer", "Request Transfer", "Re-Deployment", "Deputation or Temporary Transfer", "Internal Transfer", "Short Term Transfer", "Long Term Transfer", "Disciplinary Transfer"]
+		upload_document: DF.Attach | None
+		workflow_state: DF.Link | None
+	# end: auto-generated types
+	
 	def validate(self):
 		self.check_duplicate()
 		self.validate_transfer_date()

@@ -358,6 +358,7 @@ def make_salary_slip(
 		ignore_permissions=ignore_permissions,
 		cached=True,
 	)
+	
 
 	if cint(as_print):
 		doc.name = f"Preview for {employee}"

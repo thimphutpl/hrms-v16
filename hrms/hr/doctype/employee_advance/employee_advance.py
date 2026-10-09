@@ -84,7 +84,7 @@ class EmployeeAdvance(Document):
 		repay_unclaimed_amount_from_salary: DF.Check
 		return_amount: DF.Currency
 		salary_structure: DF.Link | None
-		status: DF.Literal["Draft", "Paid", "Unpaid", "Claimed", "Returned", "Partly Claimed and Returned", "Cancelled"]
+		status: DF.Literal["Draft", "Paid", "unpaid", "Claimed", "Returned", "Partly Claimed and Returned", "Cancelled"]
 	# end: auto-generated types
 
 	def onload(self):
@@ -326,9 +326,8 @@ class EmployeeAdvance(Document):
 				and total_amount == flt(self.paid_amount, precision)
 			):
 				status = "Partly Claimed and Returned"
-			elif flt(self.paid_amount) > 0 and flt(self.advance_amount) == flt(
-				self.paid_amount
-			):
+			elif flt(self.deduction_amount) > 0 :
+			
 				#frappe.throw("hi")
 				status = "Paid"
 				self.update_salary_structure()

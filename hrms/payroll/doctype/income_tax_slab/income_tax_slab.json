@@ -55,8 +55,7 @@
    "fieldname": "slabs",
    "fieldtype": "Table",
    "label": "Taxable Salary Slabs",
-   "options": "Taxable Salary Slab",
-   "reqd": 1
+   "options": "Taxable Salary Slab"
   },
   {
    "allow_on_submit": 1,
@@ -116,7 +115,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2025-04-09 12:56:21.254608",
+ "modified": "2026-09-27 13:26:10.872963",
  "modified_by": "Administrator",
  "module": "Payroll",
  "name": "Income Tax Slab",
@@ -169,6 +168,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

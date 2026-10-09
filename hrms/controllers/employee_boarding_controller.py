@@ -30,11 +30,16 @@ class EmployeeBoardingController(Document):
 			project_name += self.job_applicant
 		else:
 			project_name += self.employee
+		if not project_name:
+			return	
 
 		project = frappe.get_doc(
 			{
 				"doctype": "Project",
 				"project_name": project_name,
+				"project_type": "Employee Seperation"
+				if self.doctype == "Employee Separation"
+				else "Internal",
 				"expected_start_date": self.date_of_joining
 				if self.doctype == "Employee Onboarding"
 				else self.resignation_letter_date,

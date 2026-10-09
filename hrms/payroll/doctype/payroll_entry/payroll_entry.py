@@ -198,7 +198,7 @@ class PayrollEntry(Document):
 
 	@frappe.whitelist()
 	def create_salary_slips(self):
-		#frappe.throw("hi0")
+		
 		"""
 		Creates salary slip for selected employees if already not created
 		"""
@@ -1491,14 +1491,17 @@ def create_salary_slips_for_employees(employees, args, publish_progress=True):
 	payroll_entry = frappe.get_cached_doc("Payroll Entry", args.payroll_entry)
 	
 	try:
+		
 		salary_slips_exist_for = get_existing_salary_slips(employees, args)
 		count = 0
 
 		employees = list(set(employees) - set(salary_slips_exist_for))
+		
 		for emp in employees:
-			#frappe.msgprint(str(emp))
+		
 			args.update({"doctype": "Salary Slip", "employee": emp})
 			frappe.get_doc(args).insert()
+			# frappe.throw(str(emp))
 
 			count += 1
 			if publish_progress:
@@ -1554,7 +1557,7 @@ def show_payroll_submission_status(submitted, unsubmitted, payroll_entry):
 
 def get_existing_salary_slips(employees, args):
 	SalarySlip = frappe.qb.DocType("Salary Slip")
-
+	
 	return (
 		frappe.qb.from_(SalarySlip)
 		.select(SalarySlip.employee)

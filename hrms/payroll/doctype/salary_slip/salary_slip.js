@@ -9,7 +9,7 @@ frappe.ui.form.on("Salary Slip", {
 				{ fieldname: "amount", columns: 4 },
 			];
 		});
-
+			
 		frm.set_query("salary_component", "earnings", function () {
 			return {
 				filters: {

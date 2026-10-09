@@ -168,7 +168,8 @@ class LeaveApplication(Document, PWANotificationsMixin):
 		self.create_leave_ledger_entry(submit=False)
 		# notify leave applier about cancellation
 		if frappe.db.get_single_value("HR Settings", "send_leave_notification"):
-			self.notify_employee()
+			# self.notify_employee()
+			pass
 		self.cancel_attendance()
 
 		self.publish_update()
