@@ -61,6 +61,7 @@ class EmployeeTransfer(Document):
 		upload_document: DF.Attach | None
 		workflow_state: DF.Link | None
 	# end: auto-generated types
+
 	
 	def validate(self):
 		self.check_duplicate()
