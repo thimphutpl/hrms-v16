@@ -55,7 +55,6 @@
   {
    "fieldname": "employee",
    "fieldtype": "Link",
-   "ignore_user_permissions": 1,
    "in_global_search": 1,
    "in_standard_filter": 1,
    "label": "Employee",
@@ -284,7 +283,7 @@
  "is_submittable": 1,
  "links": [],
  "max_attachments": 3,
- "modified": "2026-09-18 12:24:07.214806",
+ "modified": "2026-10-26 19:30:20.197569",
  "modified_by": "Administrator",
  "module": "HR",
  "name": "Leave Application",
